@@ -1,0 +1,117 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Tenant {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  users       User[]
+  products    Product[]
+  subscriptions Subscription[]
+  files       File[]
+  domains     Domain[]
+}
+
+model User {
+  id               String    @id @default(cuid())
+  email            String    @unique
+  name             String?
+  manusId          String    @unique
+  asaasCustomerId  String?   @unique
+  tenantId         String?
+  tenant           Tenant?   @relation(fields: [tenantId], references: [id])
+  
+  // Relação com Afiliados
+  affiliate        Affiliate? @relation("UserAsAffiliate")
+  referredBy       Affiliate? @relation("ReferredUsers", fields: [referredById], references: [id])
+  referredById     String?
+  
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+model Affiliate {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  user         User     @relation("UserAsAffiliate", fields: [userId], references: [id])
+  
+  socialMedia  String
+  status       AffiliateStatus @default(PENDING)
+  couponCode   String   @unique
+  balance      Float    @default(0)
+  
+  referredUsers User[]  @relation("ReferredUsers")
+  commissions   Commission[]
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+enum AffiliateStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Commission {
+  id          String   @id @default(cuid())
+  affiliateId String
+  affiliate   Affiliate @relation(fields: [affiliateId], references: [id])
+  amount      Float
+  description String
+  status      String   @default("PENDING") // PENDING, PAID
+  createdAt   DateTime @default(now())
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  description String   @db.Text
+  price       Float
+  image       String
+  category    String
+  stock       Int
+  features    String?  @db.Text // JSON string: emails, s3, domains, nvme
+  tenantId    String?
+  tenant      Tenant?  @relation(fields: [tenantId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Subscription {
+  id                 String   @id @default(cuid())
+  status             String
+  planId             String
+  asaasSubscriptionId String?  @unique
+  tenantId           String
+  tenant             Tenant   @relation(fields: [tenantId], references: [id])
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model File {
+  id        String   @id @default(cuid())
+  name      String
+  url       String
+  size      Int
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Domain {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  createdAt DateTime @default(now())
+}
