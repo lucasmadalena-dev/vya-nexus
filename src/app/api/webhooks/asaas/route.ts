@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { sendWelcomeEmail } from '@/lib/email';
 
 export async function POST(req: Request) {
   try {
@@ -12,7 +13,6 @@ export async function POST(req: Request) {
       const asaas_customer_id = payment.customer;
       const amount = payment.value;
       
-      // Extrai dados da referência externa se existirem
       let externalData = null;
       try {
         if (payment.externalReference) {
@@ -22,26 +22,44 @@ export async function POST(req: Request) {
         console.warn('Falha ao processar externalReference no webhook');
       }
 
-      // 1. Encontrar o usuário pelo Customer ID do Asaas
+      // 1. Encontrar o usuário e tenant
       const user = await prisma.user.findFirst({
         where: { asaas_customer_id },
         include: { 
-          affiliate: true,
-          // Se o usuário foi indicado por alguém (usando o campo coupon no cadastro)
+          tenant: {
+            include: {
+              subscriptions: {
+                where: { status: 'PENDING' },
+                include: { plan: true }
+              }
+            }
+          }
         }
       });
 
-      if (user) {
+      if (user && user.tenant) {
         // 2. Ativar Assinatura
-        await prisma.subscription.updateMany({
-          where: { userId: user.id },
-          data: { status: 'ACTIVE' }
-        });
+        const pendingSub = user.tenant.subscriptions[0];
+        if (pendingSub) {
+          await prisma.subscription.update({
+            where: { id: pendingSub.id },
+            data: { status: 'ACTIVE' }
+          });
 
-        // 3. Lógica de Comissão de Afiliado
-        // Buscamos se o usuário tem um cupom vinculado (via externalReference do checkout ou registro)
+          // 3. Enviar E-mail de Boas-vindas (VyaConnect)
+          await sendWelcomeEmail(
+            user.email!,
+            user.name || 'Cliente',
+            pendingSub.plan?.name || 'VyaNexus'
+          );
+
+          // 3.1 Provisionar Armazenamento NVMe Físico
+          const { provisionTenantStorage } = await import('@/lib/provisioning');
+          await provisionTenantStorage(user.tenant.id);
+        }
+
+        // 4. Lógica de Comissão de Afiliado
         const couponCode = externalData?.coupon;
-        
         if (couponCode) {
           const affiliate = await prisma.affiliate.findUnique({
             where: { couponCode }
@@ -50,7 +68,6 @@ export async function POST(req: Request) {
           if (affiliate && affiliate.userId !== user.id) {
             const commissionAmount = amount * 0.30;
             
-            // Registra a comissão
             await prisma.commission.create({
               data: {
                 affiliateId: affiliate.id,
@@ -60,7 +77,6 @@ export async function POST(req: Request) {
               }
             });
 
-            // Incrementa o saldo do influenciador
             await prisma.affiliate.update({
               where: { id: affiliate.id },
               data: { balance: { increment: commissionAmount } }
