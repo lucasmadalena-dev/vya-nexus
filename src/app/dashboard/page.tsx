@@ -10,7 +10,8 @@ import {
   Globe, 
   Settings, 
   ArrowUpRight,
-  Sparkles
+  Sparkles,
+  Zap
 } from "lucide-react";
 import EcosystemStatus from "@/components/dashboard/EcosystemStatus";
 
@@ -46,7 +47,7 @@ export default async function DashboardPage() {
   const planData = activeSubscription?.plan;
   const features = planData ? JSON.parse(planData.features || '{}') : null;
 
-  // Lógica de Gamificação
+  // Lógica de Gamificação (Dados Reais)
   const setupSteps = [
     {
       id: 'storage',
@@ -71,43 +72,63 @@ export default async function DashboardPage() {
     }
   ];
 
+  // Cálculo de Uso de Storage (Simulado por enquanto, em produção seria real)
+  const storageUsed = 0.5;
+  const storageLimit = parseFloat(features?.s3?.replace('GB', '') || '15');
+  const storagePercent = (storageUsed / storageLimit) * 100;
+
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar */}
-      <aside className="w-64 bg-gray-900 text-white hidden md:flex flex-col">
-        <div className="p-8">
-          <h1 className="text-2xl font-black tracking-tighter text-blue-500">VyaPanel</h1>
+      <aside className="w-80 bg-white border-r border-gray-100 p-8 flex flex-col hidden lg:flex">
+        <div className="flex items-center gap-3 mb-12 px-2">
+          <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center">
+            <Zap className="w-6 h-6 text-white" fill="currentColor" />
+          </div>
+          <span className="text-2xl font-black text-gray-900 tracking-tighter italic uppercase">VyaNexus</span>
         </div>
-        <nav className="flex-grow px-4 space-y-2">
-          <a href="/dashboard" className="flex items-center gap-3 p-4 bg-blue-600 rounded-2xl font-bold transition-all">
-            <LayoutDashboard className="w-5 h-5" /> Visão Geral
+
+        <nav className="space-y-2 flex-1">
+          <a href="/dashboard" className="flex items-center gap-3 px-4 py-4 bg-blue-50 text-blue-600 rounded-2xl font-black text-sm uppercase tracking-widest transition-all">
+            <LayoutDashboard className="w-5 h-5" />
+            Dashboard
           </a>
-          <a href="/dashboard/drive" className="flex items-center gap-3 p-4 hover:bg-gray-800 rounded-2xl font-bold transition-colors">
-            <HardDrive className="w-5 h-5" /> VyaDrive
+          <a href="/dashboard/drive" className="flex items-center gap-3 px-4 py-4 text-gray-400 hover:text-gray-900 hover:bg-gray-50 rounded-2xl font-black text-sm uppercase tracking-widest transition-all">
+            <HardDrive className="w-5 h-5" />
+            VyaDrive
           </a>
-          <a href="/dashboard/mail" className="flex items-center gap-3 p-4 hover:bg-gray-800 rounded-2xl font-bold transition-colors">
-            <Mail className="w-5 h-5" /> Webmail
-          </a>
-          <a href="#" className="flex items-center gap-3 p-4 hover:bg-gray-800 rounded-2xl font-bold transition-colors text-gray-500">
-            <Settings className="w-5 h-5" /> Configurações
+          <a href="/dashboard/mail" className="flex items-center gap-3 px-4 py-4 text-gray-400 hover:text-gray-900 hover:bg-gray-50 rounded-2xl font-black text-sm uppercase tracking-widest transition-all">
+            <Mail className="w-5 h-5" />
+            VyaConnect
           </a>
         </nav>
+
+        <div className="mt-auto p-6 bg-gray-900 rounded-[32px] text-white">
+          <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-2">Plano Atual</p>
+          <h4 className="text-xl font-black mb-4 tracking-tight">{planData?.name || 'Sem Plano'}</h4>
+          <div className="w-full bg-white/10 h-2 rounded-full mb-2">
+            <div className="bg-blue-500 h-full rounded-full" style={{ width: `${storagePercent}%` }}></div>
+          </div>
+          <p className="text-[10px] font-medium text-white/50">{storageUsed}GB de {storageLimit}GB usados</p>
+        </div>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-grow p-8">
-        <header className="flex justify-between items-center mb-10">
+      <main className="flex-grow p-4 md:p-12 overflow-y-auto">
+        <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
           <div>
-            <h2 className="text-3xl font-black text-gray-900 tracking-tight">Bem-vindo, {user.name}</h2>
+            <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-2">
+              Olá, {user.name?.split(' ')[0]} 👋
+            </h1>
             <p className="text-gray-500 font-medium">Sua infraestrutura de alta performance.</p>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="text-right">
-              <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Plano Ativo</p>
-              <p className="text-sm font-bold text-blue-600 uppercase">{planData?.name || 'Nenhum'}</p>
+          <div className="flex items-center gap-4 bg-white p-3 rounded-3xl border border-gray-100 shadow-sm">
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white font-black">
+              {user.name?.[0]}
             </div>
-            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center font-black text-blue-600">
-              {user.name?.charAt(0)}
+            <div className="pr-4 text-right">
+              <p className="text-sm font-black text-gray-900 leading-none mb-1">{user.name}</p>
+              <p className="text-xs font-medium text-gray-400">{user.email}</p>
             </div>
           </div>
         </header>
