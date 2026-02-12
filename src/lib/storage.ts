@@ -1,4 +1,5 @@
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { prisma } from "@/lib/prisma";
 
 const s3Client = new S3Client({
@@ -15,7 +16,6 @@ export async function uploadToVyaCloud(
   fileName: string,
   fileSize: number
 ) {
-  // 1. Buscar assinatura ativa e limite de storage do tenant
   const subscription = await prisma.subscription.findFirst({
     where: { 
       tenantId,
@@ -30,12 +30,10 @@ export async function uploadToVyaCloud(
     throw new Error("Assinatura ativa não encontrada para este tenant.");
   }
 
-  // Extrair limite do JSON de features (ex: "100GB")
   const features = JSON.parse(subscription.plan.features || "{}");
   const storageLimitGB = parseInt(features.s3 || "0");
   const storageLimitBytes = storageLimitGB * 1024 * 1024 * 1024;
 
-  // 2. Calcular uso atual de storage do tenant
   const currentUsage = await prisma.file.aggregate({
     where: { tenantId },
     _sum: { size: true }
@@ -47,7 +45,6 @@ export async function uploadToVyaCloud(
     throw new Error(`Limite de storage excedido. Seu plano permite até ${storageLimitGB}GB.`);
   }
 
-  // 3. Realizar upload para o S3
   const bucketName = process.env.AWS_S3_BUCKET || "vya-nexus-storage";
   const key = `${tenantId}/${Date.now()}-${fileName}`;
 
@@ -60,7 +57,6 @@ export async function uploadToVyaCloud(
     })
   );
 
-  // 4. Registrar arquivo no banco de dados
   const newFile = await prisma.file.create({
     data: {
       name: fileName,
@@ -72,4 +68,35 @@ export async function uploadToVyaCloud(
   });
 
   return newFile;
+}
+
+export async function getDownloadUrl(key: string) {
+  const command = new GetObjectCommand({
+    Bucket: process.env.AWS_S3_BUCKET || "vya-nexus-storage",
+    Key: key,
+  });
+
+  // Expira em 1 hora (3600 segundos)
+  return await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+}
+
+export async function getTenantStorageUsage(tenantId: string) {
+  const usage = await prisma.file.aggregate({
+    where: { tenantId },
+    _sum: { size: true }
+  });
+
+  const subscription = await prisma.subscription.findFirst({
+    where: { tenantId, status: "ACTIVE" },
+    include: { plan: true }
+  });
+
+  const features = JSON.parse(subscription?.plan?.features || "{}");
+  const limitGB = parseInt(features.s3 || "0");
+
+  return {
+    usedBytes: usage._sum.size || 0,
+    limitBytes: limitGB * 1024 * 1024 * 1024,
+    limitGB
+  };
 }
