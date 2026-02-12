@@ -3,6 +3,17 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { uploadToVyaCloud } from "@/lib/storage";
 import { prisma } from "@/lib/prisma";
+import path from "path";
+
+/**
+ * Sanitiza o nome do arquivo para evitar Path Traversal e caracteres especiais problemáticos.
+ */
+function sanitizeFileName(fileName: string): string {
+  // Remove caminhos e mantém apenas o nome do arquivo
+  const baseName = path.basename(fileName);
+  // Remove caracteres que não sejam alfanuméricos, pontos, hífens ou underlines
+  return baseName.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+}
 
 export async function POST(req: Request) {
   try {
@@ -27,11 +38,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Nenhum arquivo enviado" }, { status: 400 });
     }
 
+    const sanitizedName = sanitizeFileName(file.name);
     const buffer = Buffer.from(await file.arrayBuffer());
+    
     const uploadedFile = await uploadToVyaCloud(
       user.tenantId,
       buffer,
-      file.name,
+      sanitizedName,
       file.size
     );
 
