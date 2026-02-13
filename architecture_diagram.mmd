@@ -1,0 +1,43 @@
+graph TD
+    subgraph "Internet"
+        User((Usuário Final))
+        DNS[DNS / Domínio]
+    end
+
+    subgraph "Hostinger VPS (KVM)"
+        subgraph "Docker Network (vyanexus_net)"
+            Nginx[Nginx Proxy Container]
+            App[Next.js App Container]
+            MySQL[(MySQL DB Container)]
+        end
+
+        subgraph "Host Filesystem (NVMe)"
+            TenantsDir["/var/www/vyanexus/tenants"]
+            DBData["/var/lib/mysql (Volume)"]
+        end
+
+        DeployScript[deploy.sh]
+    end
+
+    subgraph "External Services"
+        Asaas[Asaas API]
+        AWS[AWS S3 Storage]
+        SMTP[SMTP Email Server]
+    end
+
+    User --> DNS
+    DNS --> Nginx
+    Nginx -->|Proxy Pass: 3000| App
+    App -->|Prisma ORM| MySQL
+    
+    App -.->|Provisionamento| TenantsDir
+    Nginx -.->|Servir Arquivos Estáticos| TenantsDir
+    MySQL -.->|Persistência| DBData
+
+    App -->|Pagamentos| Asaas
+    App -->|Arquivos/Drive| AWS
+    App -->|Notificações| SMTP
+
+    DeployScript -->|Git Pull / Build / Up| Nginx
+    DeployScript -->|Git Pull / Build / Up| App
+    DeployScript -->|Git Pull / Build / Up| MySQL

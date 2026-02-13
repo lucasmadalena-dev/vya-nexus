@@ -2,6 +2,7 @@ FROM node:20-alpine AS base
 
 # 1. Instalar dependências e construir a aplicação
 FROM base AS builder
+RUN apk add --no-cache openssl libc6-compat
 WORKDIR /app
 COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
 RUN \
@@ -11,6 +12,7 @@ RUN \
   else echo "Lockfile not found." && exit 1; \
   fi
 COPY . .
+RUN npx prisma generate
 RUN npm run build
 
 # 2. Executar a aplicação em produção
