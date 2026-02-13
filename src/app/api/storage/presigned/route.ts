@@ -26,7 +26,7 @@ export async function GET(req: Request) {
     const file = await prisma.file.findFirst({
       where: { 
         id: fileId,
-        tenantId: user?.tenantId
+        tenantId: user?.tenantId || ''
       }
     });
 
