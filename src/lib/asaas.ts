@@ -14,6 +14,25 @@ export const asaas = {
     return response.json();
   },
 
+  async createPayment(data: {
+    customer: string;
+    billingType: string;
+    value: number;
+    dueDate: string;
+    description: string;
+    externalReference?: string;
+  }) {
+    const response = await fetch(`${ASAAS_API_URL}/payments`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'access_token': ASAAS_API_KEY || '',
+      },
+      body: JSON.stringify(data),
+    });
+    return response.json();
+  },
+
   async createSubscription(data: {
     customer: string;
     billingType: 'CREDIT_CARD' | 'BOLETO' | 'PIX';
