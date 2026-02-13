@@ -4,6 +4,7 @@
  */
 
 const requiredEnvVars = [
+  { name: 'NODE_ENV', pattern: /^production$/ },
   { name: 'DATABASE_URL', pattern: /^mysql:\/\/.+:.+@.+:\d+\/.+$/ },
   { name: 'NEXTAUTH_SECRET', minLength: 16 },
   { name: 'NEXTAUTH_URL', pattern: /^https?:\/\/.+$/ },
@@ -14,6 +15,9 @@ const requiredEnvVars = [
   { name: 'AWS_SECRET_ACCESS_KEY', minLength: 32 },
   { name: 'AWS_S3_BUCKET', minLength: 3 },
   { name: 'JWT_SECRET', minLength: 16 },
+  { name: 'ASAAS_API_URL', pattern: /^https?:\/\/.+$/ },
+  { name: 'NEXTAUTH_URL', pattern: /^https?:\/\/.+$/ },
+  { name: 'AWS_REGION', minLength: 2 },
 ];
 
 export function validateProductionEnv() {
