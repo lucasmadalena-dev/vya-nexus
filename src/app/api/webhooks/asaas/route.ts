@@ -10,7 +10,7 @@ export async function POST(req: Request) {
     console.log(`[Asaas Webhook] Evento recebido: ${event}`);
 
     if (event === 'PAYMENT_CONFIRMED' || event === 'PAYMENT_RECEIVED') {
-      const asaas_customer_id = payment.customer;
+      const asaasCustomerId = payment.customer;
       const amount = payment.value;
       
       let externalData = null;
@@ -24,7 +24,7 @@ export async function POST(req: Request) {
 
       // 1. Encontrar o usuário e tenant
       const user = await prisma.user.findFirst({
-        where: { asaas_customer_id },
+        where: { asaasCustomerId },
         include: { 
           tenant: {
             include: {

@@ -26,8 +26,8 @@ export async function POST(req: Request) {
       return new Response('Usuário não encontrado', { status: 404 });
     }
 
-    // 1. Garante que o usuário tem um asaas_customer_id
-    let customerId = user.asaas_customer_id;
+    // 1. Garante que o usuário tem um asaasCustomerId
+    let customerId = user.asaasCustomerId;
     if (!customerId) {
       const customer = await asaas.createCustomer({
         name: user.name || 'Cliente VyaNexus',
@@ -38,7 +38,7 @@ export async function POST(req: Request) {
       
       await prisma.user.update({
         where: { id: user.id },
-        data: { asaas_customer_id: customerId }
+        data: { asaasCustomerId: customerId }
       });
     }
 
