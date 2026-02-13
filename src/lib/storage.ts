@@ -1,6 +1,6 @@
 import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { prisma } from "@/lib/prisma";
+import prisma from "@/lib/prisma";
 
 const s3Client = new S3Client({
   region: process.env.AWS_REGION || "us-east-1",

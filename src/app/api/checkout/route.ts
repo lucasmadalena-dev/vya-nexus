@@ -32,7 +32,6 @@ export async function POST(req: Request) {
       const customer = await asaas.createCustomer({
         name: user.name || 'Cliente VyaNexus',
         email: user.email!,
-        externalReference: user.id
       });
       customerId = customer.id;
       
