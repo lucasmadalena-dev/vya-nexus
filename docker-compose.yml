@@ -13,8 +13,11 @@ services:
       - "3000"
     volumes:
       - /var/www/vyanexus/tenants:/var/www/vyanexus/tenants # Mapeamento para volumes NVMe
+      - ./public/uploads:/app/public/uploads
     depends_on:
       - mysql
+    networks:
+      - vyanexus_net
 
   nginx:
     image: nginx:latest
@@ -29,6 +32,8 @@ services:
       - /var/www/vyanexus/tenants:/var/www/vyanexus/tenants # Mapeamento para volumes NVMe
     depends_on:
       - vyanexus
+    networks:
+      - vyanexus_net
 
   mysql:
     image: mysql:8.0
@@ -37,12 +42,18 @@ services:
     env_file:
       - .env.production
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-5camisaNexus}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-vya_nexus}
+      MYSQL_USER: ${MYSQL_USER:-root}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-5camisaNexus}
     volumes:
       - mysql_data:/var/lib/mysql
+    networks:
+      - vyanexus_net
+
+networks:
+  vyanexus_net:
+    driver: bridge
 
 volumes:
   mysql_data:
