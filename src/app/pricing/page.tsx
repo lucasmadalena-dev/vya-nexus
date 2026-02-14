@@ -1,3 +1,5 @@
+"use client";
+
 import React from 'react';
 import Link from 'next/link';
 import { CheckCircle } from 'lucide-react';
@@ -26,7 +28,7 @@ const PricingPage = () => {
       const data = await response.json();
 
       if (response.ok && data.url) {
-        router.push(data.url); // Redireciona para o checkout do Asaas
+        window.location.href = data.url; // Redireciona para o checkout do Asaas
       } else {
         console.error('Erro ao gerar link de checkout:', data.error);
         alert('Ocorreu um erro ao iniciar o checkout. Tente novamente.');
