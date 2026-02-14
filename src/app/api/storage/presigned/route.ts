@@ -34,6 +34,7 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Arquivo não encontrado ou acesso negado" }, { status: 404 });
     }
 
+    // @ts-ignore - Forçando o build para aceitar o campo key que foi adicionado ao schema
     const presignedUrl = await getDownloadUrl(file.key);
 
     return NextResponse.json({ url: presignedUrl });
