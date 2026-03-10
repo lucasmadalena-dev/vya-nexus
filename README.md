@@ -1,43 +1,35 @@
-# VyaNexus - Guia de Deploy para Produção (Hostinger VPS)
+# VyaNexus Ecosystem - Produção 🚀
 
-Este documento detalha os passos necessários para realizar o deploy do VyaNexus em um ambiente de produção na Hostinger VPS (KVM).
+**VyaNexus** é uma solução unificada de infraestrutura digital focada em **Hosting NVMe + S3 Storage**, projetada para oferecer alta performance e escalabilidade para empresas e usuários finais.
 
-## 1. Pré-requisitos na VPS
+Este repositório contém a versão de **Produção** do ecossistema, otimizada para deploy em ambientes Cloud e VPS.
 
-Certifique-se de que sua VPS Hostinger tenha os seguintes softwares instalados:
+---
 
-*   **Docker**
-*   **Docker Compose**
-*   **Git**
-*   **Nginx** (para gerenciamento de certificados SSL e redirecionamento, embora o Nginx do Docker Compose possa ser usado como proxy interno)
+## 🏗️ Arquitetura e Engenharia
 
-## 2. Configuração do Repositório
+A arquitetura do VyaNexus foi concebida com foco em isolamento de recursos e eficiência operacional:
 
-1.  **Clone o repositório** para o diretório `/home/ubuntu/vya-nexus` na sua VPS:
+*   **Multi-tenancy Nativo:** Isolamento no nível do sistema de arquivos através de diretórios específicos para cada tenant (`/var/www/vyanexus/tenants`).
+*   **Performance NVMe:** Otimizado para discos de estado sólido de ultra velocidade.
+*   **Zero Egress Storage:** Integração eficiente com S3 para armazenamento persistente.
+*   **Isolamento via Containers:** Utilização de Docker e Nginx Proxy Manager para orquestração segura.
 
-    ```bash
-    git clone https://github.com/lucasmadalena-dev/vya-nexus.git /home/ubuntu/vya-nexus
-    ```
+---
 
-2.  **Navegue** para o diretório do projeto:
+## 🛠️ Stack Tecnológica
 
-    ```bash
-    cd /home/ubuntu/vya-nexus
-    ```
+| Camada | Tecnologia |
+| :--- | :--- |
+| **Frontend/Backend** | Next.js (App Router), TypeScript |
+| **Banco de Dados** | PostgreSQL / MySQL |
+| **Infraestrutura** | Docker, Nginx Proxy, VPS (Linux) |
+| **Pagamentos** | Asaas, Stripe |
 
-## 3. Variáveis de Ambiente (`.env.production`)
+---
 
-Crie um arquivo `.env.production` na raiz do projeto (`/home/ubuntu/vya-nexus/.env.production`) com as suas credenciais de produção. Utilize o template abaixo e substitua os valores pelos seus dados reais:
+> **Nota de Senioridade:** Este projeto reflete a transição de algoritmos puros para arquiteturas de nuvem complexas, focando em segurança, escalabilidade e viabilidade financeira.
 
-```ini
-# Variáveis de Ambiente para Produção
-
-# Database
-DATABASE_URL="mysql://user:password@mysql:3306/vyanexus"
-MYSQL_ROOT_PASSWORD="your_mysql_root_password"
-MYSQL_DATABASE="vyanexus"
-MYSQL_USER="vyanexus_user"
-MYSQL_PASSWORD="vyanexus_password"
 
 # Asaas (Gateway de Pagamento)
 ASAAS_API_KEY="your_asaas_production_api_key"
@@ -114,6 +106,3 @@ Você deve ver os containers `vyanexus_app`, `vyanexus_nginx` e `vyanexus_mysql`
 
 **ATENÇÃO:** Este deploy é contido e isolado. O script `deploy.sh` e as configurações Docker **NÃO** interagem ou modificam quaisquer recursos fora do escopo do diretório `/home/ubuntu/vyanexus` e do volume `/var/www/vyanexus/tenants`. **É proibido qualquer script que tente listar ou alterar recursos que não pertençam ao novo IP do VyaNexus.**
 
----
-
-**Desenvolvido por Manus AI**
